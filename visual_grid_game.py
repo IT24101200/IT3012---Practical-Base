@@ -40,14 +40,15 @@ class VisualGridHuntGame:
         self.collision = False
 
     def get_percept(self) -> dict:
+        x, y = self.agent_pos
+
         return {
-            'agent_pos': list(self.agent_pos),
-            'opponent_positions': [list(op) for op in self.opponents],
-            'smells_food': tuple(self.agent_pos) in self.food_positions,
-            'hit_wall': tuple(self.agent_pos) in self.walls,
-            'collision': self.collision,
-            'score': self.score,
-            'remaining_food': len(self.food_positions)
+            "food_here": (x, y) in self.food_positions,
+
+            "wall_up": (x, y + 1) in self.walls or y + 1 >= self.height,
+            "wall_down": (x, y - 1) in self.walls or y - 1 < 0,
+            "wall_left": (x - 1, y) in self.walls or x - 1 < 0,
+            "wall_right": (x + 1, y) in self.walls or x + 1 >= self.width
         }
 
     def execute_action(self, action: str):
