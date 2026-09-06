@@ -11,8 +11,13 @@ class GridHuntGame:
         self.agent_pos = [0, 0]  # Starting position (x, y)
 
         # Place a few random food pellets and obstacles (walls)
-        self.food_positions = {[1, 2], [2, 3], [3, 0], [2, 1]}
-        self.walls = {[1, 1], [2, 2]}
+        self.food_positions = {(1, 2), (2, 3), (3, 0), (2, 1)}
+        self.walls = {(1, 1), (2, 2)}
+
+        # Lab 05 demo sensors (not an actual Drow Ranger vision system).
+        self.target_visible_tiles = {(1, 0)}
+        self.has_dust = True
+        self.bloodseeker_missing = True
 
         self.score = 0
         self.steps = 0
@@ -20,6 +25,12 @@ class GridHuntGame:
     def get_percept(self, agent) -> dict:
         return {
             'agent_pos': list(self.agent_pos),
+            'grid_size': (self.width, self.height),
+            'walls': set(self.walls),
+            'food_positions': set(self.food_positions),
+            'target_visible_tiles': set(self.target_visible_tiles),
+            'has_dust': self.has_dust,
+            'bloodseeker_missing': self.bloodseeker_missing,
             'smells_food': tuple(self.agent_pos) in self.food_positions,
             'hit_wall': tuple(self.agent_pos) in self.walls,
             'score': self.score,

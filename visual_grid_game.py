@@ -1,6 +1,7 @@
 # visual_grid_game.py
 import random
 import tkinter as tk
+from agent import GreedyGridAgent
 
 
 class VisualGridHuntGame:
@@ -35,6 +36,11 @@ class VisualGridHuntGame:
             if tuple(op_pos) != (0, 0) and tuple(op_pos) not in self.walls and tuple(op_pos) not in self.food_positions:
                 self.opponents.append(op_pos)
 
+        # Explicit demo inputs for the lab rules; independent of red opponents.
+        self.target_visible_tiles = {(1, 0)}
+        self.has_dust = True
+        self.bloodseeker_missing = True
+
         self.score = 0
         self.steps = 0
         self.collision = False
@@ -42,6 +48,12 @@ class VisualGridHuntGame:
     def get_percept(self) -> dict:
         return {
             'agent_pos': list(self.agent_pos),
+            'grid_size': (self.width, self.height),
+            'walls': set(self.walls),
+            'food_positions': set(self.food_positions),
+            'target_visible_tiles': set(self.target_visible_tiles),
+            'has_dust': self.has_dust,
+            'bloodseeker_missing': self.bloodseeker_missing,
             'opponent_positions': [list(op) for op in self.opponents],
             'smells_food': tuple(self.agent_pos) in self.food_positions,
             'hit_wall': tuple(self.agent_pos) in self.walls,
@@ -102,6 +114,8 @@ class GridGameGUI:
         self.env = VisualGridHuntGame(width=width, height=height, num_food=num_food, num_opponents=num_opponents,
                                       custom_walls=walls)
 
+        self.agent = GreedyGridAgent()
+
         # Dynamically calculate cell size so the total canvas fits nicely within a 600x600 window ceiling
         max_canvas_dim = 600
         self.cell_size = max(20, min(max_canvas_dim // self.env.width, max_canvas_dim // self.env.height))
@@ -118,6 +132,7 @@ class GridGameGUI:
         self.btn = tk.Button(root, text="Start Simulation", command=self.run_loop, font=("Arial", 12), bg="#000066",
                              fg="white")
         self.btn.pack(pady=5)
+        tk.Label(root, text="Pink = demo target tile; skipped when Retreat is inferred").pack()
 
         self.draw_grid()
 
@@ -132,6 +147,8 @@ class GridGameGUI:
                 y2 = y1 + self.cell_size
 
                 color = "#f1f5f9" if (x, y) not in self.env.walls else "#64748b"
+                if (x, y) in self.env.target_visible_tiles and (x, y) not in self.env.walls:
+                    color = "#fda4af"
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="#cbd5e1")
 
                 # Only draw text if cell is large enough
@@ -165,7 +182,7 @@ class GridGameGUI:
 
         def step():
             if not self.env.is_done():
-                action = random.choice(['Up', 'Down', 'Left', 'Right'])
+                action = self.agent.sense_and_act(self.env.get_percept())
                 self.env.execute_action(action)
 
                 self.draw_grid()
